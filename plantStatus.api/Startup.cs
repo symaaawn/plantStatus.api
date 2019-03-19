@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace plantStatus.api {
     public class Startup {
@@ -24,6 +25,13 @@ namespace plantStatus.api {
             services.AddMvc()
                 .AddMvcOptions(o => o.OutputFormatters.Add(
                     new XmlDataContractSerializerOutputFormatter()));
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Info()
+                {
+                    Title = "PlantStatusAPI", Version = "v1"
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -35,6 +43,8 @@ namespace plantStatus.api {
             }
 
             app.UseStatusCodePages();
+
+            app.UseSwagger();
 
             app.UseMvc();
         }

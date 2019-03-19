@@ -20,7 +20,7 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpGet("{id}", Name = "Get")]
-        public IActionResult Get(string id)
+        public IActionResult Get([FromRoute]string id)
         {
             try
             {
