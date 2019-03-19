@@ -109,11 +109,12 @@ namespace plantStatus.api.Controllers
                     lightOn = false;
                 }
 
-
                 LightControlModel lightControlModel = new LightControlModel()
                 {
                     LightOn = lightOn
                 };
+
+                _log.Info($"Added value {lightModelFromRequest.Value} to Sensor {sensorId}. Turn light on: {lightOn}");
 
                 return CreatedAtAction("Get", new
                 {
@@ -159,6 +160,8 @@ namespace plantStatus.api.Controllers
                 }
 
                 lightModelFromStore.Value = lightModelFromRequest.Value;
+
+                _log.Info($"Updated LightValue {lightModelFromStore.Id} to Value {lightModelFromStore.Value}");
 
                 return NoContent();
             }
