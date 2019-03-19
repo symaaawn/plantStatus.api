@@ -6,5 +6,6 @@ using System.Threading.Tasks;
 namespace plantStatus.api.Models {
     public class LightControlModel {
         public bool LightOn { get; set; }
+        public DateTime CurrentDateTime { get; set; }
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NLog;
+using plantStatus.api.Models;
 
 namespace plantStatus.api.Controllers
 {
@@ -36,6 +37,39 @@ namespace plantStatus.api.Controllers
             catch (Exception e)
             {
                 _log.Error(e, $"Exception while getting sensor {id}");
+                return StatusCode(500, "our server did an oopsie");
+            }
+        }
+
+        [HttpPost(Name = "Post")]
+        public IActionResult Post([FromBody] SensorModelForCreation sensorModelFromRequest)
+        {
+            try
+            {
+                if (sensorModelFromRequest == null)
+                {
+                    return BadRequest();
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest();
+                }
+
+                SensorModel sensorModelForStore = new SensorModel()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Description = sensorModelFromRequest.Description
+                };
+
+                SensorModelDataStore.Current.SensorModels.Add(sensorModelForStore);
+
+                _log.Info($"Created new Sensor {sensorModelForStore.Id}, {sensorModelForStore.Description}");
+
+                return CreatedAtAction("Get", new {id = sensorModelForStore.Id}, sensorModelForStore);
+            } 
+            catch (Exception e) {
+                _log.Error(e, $"Exception while posting new sensor");
                 return StatusCode(500, "our server did an oopsie");
             }
         }
