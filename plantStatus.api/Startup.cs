@@ -6,18 +6,28 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using plantStatus.api.Entities;
 using Swashbuckle.AspNetCore.Swagger;
+using NLog;
 
 namespace plantStatus.api {
-    public class Startup {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+    public class Startup
+    {
+        public static IConfigurationRoot Configuration;
 
-        public IConfiguration Configuration { get; set; }
+        public Startup(IHostingEnvironment environment)
+        {
+            //connectionString.json is of course in .gitignore
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(environment.ContentRootPath)
+                .AddJsonFile("connectionString.json", optional:false, reloadOnChange:true);
+
+            Configuration = builder.Build();
+        }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
@@ -32,15 +42,28 @@ namespace plantStatus.api {
                     Title = "PlantStatusAPI", Version = "v1"
                 });
             });
+
+            var connectionString = Configuration["connectionString"];
+            services.AddDbContext<SensorInfoContext>(o => o.UseSqlServer(connectionString));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+        public void Configure(IApplicationBuilder app, 
+            IHostingEnvironment env, 
+            ILoggerFactory loggerFactory, 
+            SensorInfoContext sensorInfoContext)
+        {
+            loggerFactory.AddConsole();
+
+            loggerFactory.AddDebug();
+
             if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
             } else {
                 app.UseExceptionHandler();
             }
+
+            sensorInfoContext.EnsureSeedDataForContext();
 
             app.UseStatusCodePages();
 
