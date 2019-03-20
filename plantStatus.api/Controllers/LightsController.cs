@@ -88,39 +88,33 @@ namespace plantStatus.api.Controllers
                     return NotFound();
                 }
 
-                LightModel lightModelForStore = new LightModel()
-                {
-                    Value = lightModelFromRequest.Value,
-                    Id = Guid.NewGuid().ToString(),
-                    TimeOfMeasurement = DateTime.Now
-                };
-
-                sensor.Light.Add(lightModelForStore);
+                DateTime now = DateTime.Now;
 
                 //Light will turn on at night.
                 //Todo: turn on light depending on the sun duration during day
                 bool lightOn;
-                if (lightModelForStore.TimeOfMeasurement.Hour <= 4 || lightModelForStore.TimeOfMeasurement.Hour >= 22)
-                {
+                if (now.Hour <= 4 || now.Hour >= 22) {
                     lightOn = true;
-                }
-                else
-                {
+                } else {
                     lightOn = false;
                 }
 
-                LightControlModel lightControlModel = new LightControlModel()
+                LightModel lightModelForStore = new LightModel()
                 {
-                    LightOn = lightOn,
-                    CurrentDateTime = DateTime.Now
+                    Value = lightModelFromRequest.Value,
+                    Id = Guid.NewGuid().ToString(),
+                    TimeOfMeasurement = now,
+                    LightOn = lightOn
                 };
+
+                sensor.Light.Add(lightModelForStore);
 
                 _log.Info($"Added value {lightModelFromRequest.Value} to Sensor {sensorId}. Turn light on: {lightOn}");
 
                 return CreatedAtAction("Get", new
                 {
                     sensorId, id = lightModelForStore.Id
-                }, lightControlModel);
+                }, lightModelForStore);
 
             }
             catch (Exception e)
