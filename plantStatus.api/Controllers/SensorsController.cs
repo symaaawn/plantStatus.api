@@ -31,7 +31,7 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpGet("{id}", Name = "Get")]
-        public IActionResult GetSensor([FromRoute]string id, [FromQuery]bool includeLight = false)
+        public IActionResult GetSensor([FromRoute]Guid id, [FromQuery]bool includeLight = false)
         {
             try
             {
@@ -61,7 +61,7 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpPost(Name = "Post")]
-        public IActionResult Post([FromBody] SensorForCreationDto sensorModelFromRequest)
+        public IActionResult CreateSensor([FromBody] SensorForCreationDto sensorModelFromRequest)
         {
             try
             {
@@ -75,17 +75,17 @@ namespace plantStatus.api.Controllers
                     return BadRequest();
                 }
 
-                SensorDto sensorModelForStore = new SensorDto()
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Description = sensorModelFromRequest.Description
-                };
+                var finalSensor = Mapper.Map<Entities.Sensor>(sensorModelFromRequest);
 
-                SensorModelDataStore.Current.SensorModels.Add(sensorModelForStore);
+                _sensorInfoRepository.AddSensor(finalSensor);
 
-                _log.Info($"Created new Sensor {sensorModelForStore.Id}, {sensorModelForStore.Description}");
+                if (!_sensorInfoRepository.Save()) {
+                    return StatusCode(500, "our server did an oopsie");
+                }
 
-                return CreatedAtAction("Get", new {id = sensorModelForStore.Id}, sensorModelForStore);
+                var sensorModelForStore = Mapper.Map<Models.SensorDto>(finalSensor);
+
+                return CreatedAtAction("GetSensor", new {id = sensorModelForStore.Id}, sensorModelForStore);
             } 
             catch (Exception e) {
                 _log.Error(e, $"Exception while posting new sensor");

@@ -7,10 +7,13 @@ using plantStatus.api.Entities;
 namespace plantStatus.api.Services {
     public interface ISensorInfoRepository
     {
-        bool SensorExists(string sensorId);
+        bool SensorExists(Guid sensorId);
         IEnumerable<Sensor> GetSensors();
-        Sensor GetSensor(string sensorId, bool includeLight);
-        IEnumerable<Light> GetLights(string sensorId);
-        Light GetLight(string sensorId, string lightId);
+        Sensor GetSensor(Guid sensorId, bool includeLight);
+        IEnumerable<Light> GetLights(Guid sensorId);
+        Light GetLight(Guid sensorId, Guid lightId);
+        void AddLightForSensor(Guid cityId, Light light);
+        void AddSensor(Sensor sensor);
+        bool Save();
     }
 }

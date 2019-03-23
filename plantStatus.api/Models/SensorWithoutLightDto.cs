@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace plantStatus.api.Models {
     public class SensorWithoutLightDto {
-        public string Id { get; set; }
+        public Guid Id { get; set; }
         public string Description { get; set; }
     }
 }

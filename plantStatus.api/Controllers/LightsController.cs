@@ -24,7 +24,7 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpGet("{sensorId}/light")]
-        public IActionResult GetLights([FromRoute] string sensorId)
+        public IActionResult GetLights([FromRoute] Guid sensorId)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpGet("{sensorId}/light/{id}")]
-        public IActionResult GetLight([FromRoute] string sensorId, [FromRoute] string id)
+        public IActionResult GetLight([FromRoute] Guid sensorId, [FromRoute] Guid id)
         {
             try
             {
@@ -77,7 +77,7 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpPost("{sensorId}/light")]
-        public IActionResult Post([FromRoute] string sensorId,
+        public IActionResult CreateLight([FromRoute] Guid sensorId,
             [FromBody] LightForCreationDto lightModelFromRequest)
         {
             try
@@ -92,12 +92,13 @@ namespace plantStatus.api.Controllers
                     return BadRequest();
                 }
 
-                var sensor = SensorModelDataStore.Current.SensorModels.FirstOrDefault(s => s.Id == sensorId);
-                if (sensor == null)
-                {
+                if (!_sensorInfoRepository.SensorExists(sensorId)) 
+                { 
                     _log.Warn($"SensorModel {sensorId} does not exist");
                     return NotFound();
                 }
+
+                var finalLight = Mapper.Map<Entities.Light>(lightModelFromRequest);
 
                 DateTime now = DateTime.Now;
 
@@ -110,19 +111,19 @@ namespace plantStatus.api.Controllers
                     lightOn = false;
                 }
 
-                LightDto lightModelForStore = new LightDto()
+                finalLight.TimeOfMeasurement = now;
+                finalLight.LightOn = lightOn;
+
+                _sensorInfoRepository.AddLightForSensor(sensorId, finalLight);
+
+                if (!_sensorInfoRepository.Save())
                 {
-                    Value = lightModelFromRequest.Value,
-                    Id = Guid.NewGuid().ToString(),
-                    TimeOfMeasurement = now,
-                    LightOn = lightOn
-                };
+                    return StatusCode(500, "our server did an oopsie");
+                }
 
-                sensor.Light.Add(lightModelForStore);
-
-                _log.Info($"Added value {lightModelFromRequest.Value} to Sensor {sensorId}. Turn light on: {lightOn}");
-
-                return CreatedAtAction("Get", new
+                var lightModelForStore = Mapper.Map<Models.LightDto>(finalLight);
+                
+                return CreatedAtAction("GetLight", new
                 {
                     sensorId, id = lightModelForStore.Id
                 }, lightModelForStore);
@@ -136,7 +137,7 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpPut("{sensorId}/light/{id}")]
-        public IActionResult Put([FromRoute] string sensorId, [FromRoute] string id,
+        public IActionResult Put([FromRoute] Guid sensorId, [FromRoute] Guid id,
             [FromBody] LightForCreationDto lightModelFromRequest)
         {
             try

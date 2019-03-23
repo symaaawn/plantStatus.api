@@ -14,17 +14,29 @@ namespace plantStatus.api.Services {
         {
             _context = context;
         }
-        public Light GetLight(string sensorId, string lightId)
+
+        public void AddLightForSensor(Guid sensorId, Light light)
+        {
+            var sensor = GetSensor(sensorId, false);
+            sensor.Light.Add(light);
+        }
+
+        public void AddSensor(Sensor sensor)
+        {
+            _context.Sensors.Add(sensor);
+        }
+
+        public Light GetLight(Guid sensorId, Guid lightId)
         {
             return _context.Lights.Where(l => l.SensorId == sensorId && l.Id == lightId).FirstOrDefault();
         }
 
-        public IEnumerable<Light> GetLights(string sensorId)
+        public IEnumerable<Light> GetLights(Guid sensorId)
         {
             return _context.Lights.Where(l => l.SensorId == sensorId).ToList();
         }
 
-        public Sensor GetSensor(string sensorId, bool includeLight) {
+        public Sensor GetSensor(Guid sensorId, bool includeLight) {
             if (includeLight)
             {
                 return _context.Sensors.Include(s => s.Light).Where(s => s.Id == sensorId).FirstOrDefault();
@@ -37,7 +49,12 @@ namespace plantStatus.api.Services {
             return _context.Sensors.OrderBy(s => s.Id).ToList();
         }
 
-        public bool SensorExists(string sensorId)
+        public bool Save()
+        {
+            return (_context.SaveChanges() >= 0);
+        }
+
+        public bool SensorExists(Guid sensorId)
         {
             return _context.Sensors.Any(s => s.Id == sensorId);
         }
