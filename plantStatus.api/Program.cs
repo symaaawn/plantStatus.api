@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace plantStatus.api {
     public class Program {
         public static void Main(string[] args) {
-            CreateWebHostBuilder(args).Build().Run();
+            CreateWebHostBuilder(args).UseSetting("detailedErrors", "true").CaptureStartupErrors(true).Build().Run();
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>

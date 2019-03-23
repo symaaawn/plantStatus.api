@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace plantStatus.api.Models {
-    public class LightModelForCreation {
+    public class LightForCreationDto {
         [Required(ErrorMessage = "You should provide a Value")]
         public int Value { get; set; }
     }

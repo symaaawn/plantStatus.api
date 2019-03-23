@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Permissions;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NLog;
 using plantStatus.api.Models;
+using plantStatus.api.Services;
 
 namespace plantStatus.api.Controllers
 {
@@ -14,21 +16,29 @@ namespace plantStatus.api.Controllers
     [ApiController]
     public class LightsController : Controller
     {
+        private ISensorInfoRepository _sensorInfoRepository;
         private static Logger _log = LogManager.GetCurrentClassLogger();
 
+        public LightsController(ISensorInfoRepository repository) {
+            _sensorInfoRepository = repository;
+        }
+
         [HttpGet("{sensorId}/light")]
-        public IActionResult Get([FromRoute] string sensorId)
+        public IActionResult GetLights([FromRoute] Guid sensorId)
         {
             try
             {
-                var sensor = SensorModelDataStore.Current.SensorModels.FirstOrDefault(s => s.Id == sensorId);
-                if (sensor == null)
+                if (!_sensorInfoRepository.SensorExists(sensorId))
                 {
                     _log.Warn($"SensorModel {sensorId} does not exist");
                     return NotFound();
                 }
 
-                return Ok(sensor.Light);
+                var lightsForSensor = _sensorInfoRepository.GetLights(sensorId);
+
+                var lightsForSensorResult = Mapper.Map<IEnumerable<LightDto>>(lightsForSensor);
+
+                return Ok(lightsForSensorResult);
             }
             catch (Exception e)
             {
@@ -38,25 +48,26 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpGet("{sensorId}/light/{id}")]
-        public IActionResult Get([FromRoute] string sensorId, [FromRoute] string id)
+        public IActionResult GetLight([FromRoute] Guid sensorId, [FromRoute] Guid id)
         {
             try
             {
-                var sensor = SensorModelDataStore.Current.SensorModels.FirstOrDefault(s => s.Id == sensorId);
-                if (sensor == null)
-                {
+                if (!_sensorInfoRepository.SensorExists(sensorId)) {
                     _log.Warn($"SensorModel {sensorId} does not exist");
                     return NotFound();
                 }
 
-                var light = sensor.Light.FirstOrDefault(l => l.Id == id);
+                var light = _sensorInfoRepository.GetLight(sensorId, id);
+
                 if (light == null)
                 {
-                    _log.Warn($"SensorModel {sensorId} does not exist");
+                    _log.Warn($"LightModel {id} does not exist");
                     return NotFound();
                 }
 
-                return Ok(light);
+                var lightResult = Mapper.Map<LightDto>(light);
+
+                return Ok(lightResult);
             }
             catch (Exception e)
             {
@@ -66,8 +77,8 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpPost("{sensorId}/light")]
-        public IActionResult Post([FromRoute] string sensorId,
-            [FromBody] LightModelForCreation lightModelFromRequest)
+        public IActionResult CreateLight([FromRoute] Guid sensorId,
+            [FromBody] LightForCreationDto lightModelFromRequest)
         {
             try
             {
@@ -81,45 +92,41 @@ namespace plantStatus.api.Controllers
                     return BadRequest();
                 }
 
-                var sensor = SensorModelDataStore.Current.SensorModels.FirstOrDefault(s => s.Id == sensorId);
-                if (sensor == null)
-                {
+                if (!_sensorInfoRepository.SensorExists(sensorId)) 
+                { 
                     _log.Warn($"SensorModel {sensorId} does not exist");
                     return NotFound();
                 }
 
-                LightModel finalLightModel = new LightModel()
-                {
-                    Value = lightModelFromRequest.Value,
-                    Id = Guid.NewGuid().ToString(),
-                    TimeOfMeasurement = DateTime.Now
-                };
+                var finalLight = Mapper.Map<Entities.Light>(lightModelFromRequest);
 
-                sensor.Light.Add(finalLightModel);
+                DateTime now = DateTime.Now;
 
                 //Light will turn on at night.
                 //Todo: turn on light depending on the sun duration during day
                 bool lightOn;
-                if (finalLightModel.TimeOfMeasurement.Hour <= 4 || finalLightModel.TimeOfMeasurement.Hour >= 22)
-                {
+                if (now.Hour <= 4 || now.Hour >= 22) {
                     lightOn = true;
-                }
-                else
-                {
+                } else {
                     lightOn = false;
                 }
 
-                LightControlModel lightControlModel = new LightControlModel()
-                {
-                    LightOn = lightOn
-                };
+                finalLight.TimeOfMeasurement = now;
+                finalLight.LightOn = lightOn;
 
-                _log.Info($"Added value {lightModelFromRequest.Value} to Sensor {sensorId}. Turn light on: {lightOn}");
+                _sensorInfoRepository.AddLightForSensor(sensorId, finalLight);
 
-                return CreatedAtAction("Get", new
+                if (!_sensorInfoRepository.Save())
                 {
-                    sensorId, id = finalLightModel.Id
-                }, lightControlModel);
+                    return StatusCode(500, "our server did an oopsie");
+                }
+
+                var lightModelForStore = Mapper.Map<Models.LightDto>(finalLight);
+                
+                return CreatedAtAction("GetLight", new
+                {
+                    sensorId, id = lightModelForStore.Id
+                }, lightModelForStore);
 
             }
             catch (Exception e)
@@ -130,8 +137,8 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpPut("{sensorId}/light/{id}")]
-        public IActionResult Put([FromRoute] string sensorId, [FromRoute] string id,
-            [FromBody] LightModelForCreation lightModelFromRequest)
+        public IActionResult Put([FromRoute] Guid sensorId, [FromRoute] Guid id,
+            [FromBody] LightForCreationDto lightModelFromRequest)
         {
             try
             {
@@ -145,24 +152,27 @@ namespace plantStatus.api.Controllers
                     return BadRequest();
                 }
 
-                var sensor = SensorModelDataStore.Current.SensorModels.FirstOrDefault(s => s.Id == sensorId);
-                if (sensor == null)
+                if (!_sensorInfoRepository.SensorExists(sensorId))
                 {
                     _log.Warn($"SensorModel {sensorId} does not exist");
                     return NotFound();
                 }
 
-                var lightModelFromStore = sensor.Light.FirstOrDefault(l => l.Id == id);
+
+                var lightModelFromStore = _sensorInfoRepository.GetLight(sensorId, id);
                 if (lightModelFromStore == null)
                 {
                     _log.Warn($"LightModel {id} does not exist");
                     return NotFound();
                 }
 
-                lightModelFromStore.Value = lightModelFromRequest.Value;
+                Mapper.Map(lightModelFromRequest, lightModelFromStore);
 
-                _log.Info($"Updated LightValue {lightModelFromStore.Id} to Value {lightModelFromStore.Value}");
-
+                if (!_sensorInfoRepository.Save())
+                {
+                    return StatusCode(500, "our server did an oopsie");
+                }
+                
                 return NoContent();
             }
             catch (Exception e)

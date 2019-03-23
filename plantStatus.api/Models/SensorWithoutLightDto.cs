@@ -4,7 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace plantStatus.api.Models {
-    public class LightControlModel {
-        public bool LightOn { get; set; }
+    public class SensorWithoutLightDto {
+        public Guid Id { get; set; }
+        public string Description { get; set; }
     }
 }
