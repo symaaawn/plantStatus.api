@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using plantStatus.api.Entities;
 using Swashbuckle.AspNetCore.Swagger;
 using NLog;
+using plantStatus.api.Services;
 
 namespace plantStatus.api {
     public class Startup
@@ -45,6 +46,8 @@ namespace plantStatus.api {
 
             var connectionString = Configuration["connectionString"];
             services.AddDbContext<SensorInfoContext>(o => o.UseSqlServer(connectionString));
+
+            services.AddScoped<ISensorInfoRepository, SensorInfoRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -56,12 +59,6 @@ namespace plantStatus.api {
             loggerFactory.AddConsole();
 
             loggerFactory.AddDebug();
-
-            if (env.IsDevelopment()) {
-                app.UseDeveloperExceptionPage();
-            } else {
-                app.UseExceptionHandler();
-            }
 
             sensorInfoContext.EnsureSeedDataForContext();
 
