@@ -136,6 +136,13 @@ namespace plantStatus.api.Controllers
             }
         }
 
+        [HttpPost]
+        public IActionResult Post()
+        {
+
+            return Ok();
+        }
+
         [HttpPut("{sensorId}/light/{id}")]
         public IActionResult Put([FromRoute] Guid sensorId, [FromRoute] Guid id,
             [FromBody] LightForCreationDto lightModelFromRequest)
