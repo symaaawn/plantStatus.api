@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace plantStatus.api.Models {
-    public class LightModelForCreation {
-        [Required(ErrorMessage = "You should provide a Value")]
+    public class LightDto {
+        public  string Id { get; set; }
+        public DateTime TimeOfMeasurement { get; set; }
         public int Value { get; set; }
+        public bool LightOn { get; set; }
     }
 }

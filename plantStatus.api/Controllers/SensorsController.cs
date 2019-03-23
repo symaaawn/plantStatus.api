@@ -6,33 +6,52 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NLog;
 using plantStatus.api.Models;
+using plantStatus.api.Services;
+using AutoMapper;
 
 namespace plantStatus.api.Controllers
 {
     [Route("api/sensors")]
     public class SensorsController : Controller
     {
+        private ISensorInfoRepository _sensorInfoRepository;
         private static Logger _log = LogManager.GetCurrentClassLogger();
 
+        public SensorsController(ISensorInfoRepository repository) {
+            _sensorInfoRepository = repository;
+        }
+
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult GetSensors()
         {
-            return Ok(SensorModelDataStore.Current.SensorModels);
+            var sensorEntities = _sensorInfoRepository.GetSensors();
+            var result = Mapper.Map<IEnumerable<SensorWithoutLightDto>>(sensorEntities);
+
+            return Ok(result);
         }
 
         [HttpGet("{id}", Name = "Get")]
-        public IActionResult Get([FromRoute]string id)
+        public IActionResult GetSensor([FromRoute]string id, [FromQuery]bool includeLight = false)
         {
             try
             {
-                var sensorModelToReturn = SensorModelDataStore.Current.SensorModels.FirstOrDefault(s => s.Id == id);
-                if (sensorModelToReturn == null)
+                var sensor = _sensorInfoRepository.GetSensor(id, includeLight);
+
+                if (sensor == null)
                 {
                     _log.Warn($"SensorModel {id} does not exist");
                     return NotFound();
                 }
 
-                return Ok(sensorModelToReturn);
+                if (includeLight)
+                {
+                    var sensorResult = Mapper.Map<SensorDto>(sensor);
+
+                    return Ok(sensorResult);
+                }
+
+                var sensorWithoutLightResult = Mapper.Map<SensorWithoutLightDto>(sensor);
+                return Ok(sensorWithoutLightResult);
             }
             catch (Exception e)
             {
@@ -42,7 +61,7 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpPost(Name = "Post")]
-        public IActionResult Post([FromBody] SensorModelForCreation sensorModelFromRequest)
+        public IActionResult Post([FromBody] SensorForCreationDto sensorModelFromRequest)
         {
             try
             {
@@ -56,7 +75,7 @@ namespace plantStatus.api.Controllers
                     return BadRequest();
                 }
 
-                SensorModel sensorModelForStore = new SensorModel()
+                SensorDto sensorModelForStore = new SensorDto()
                 {
                     Id = Guid.NewGuid().ToString(),
                     Description = sensorModelFromRequest.Description

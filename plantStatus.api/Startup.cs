@@ -66,6 +66,13 @@ namespace plantStatus.api {
 
             app.UseSwagger();
 
+            AutoMapper.Mapper.Initialize(cfg =>
+            {
+                cfg.CreateMap<Entities.Sensor, Models.SensorWithoutLightDto>();
+                cfg.CreateMap<Entities.Sensor, Models.SensorDto>();
+                cfg.CreateMap<Entities.Light, Models.LightDto>();
+            });
+
             app.UseMvc();
         }
     }

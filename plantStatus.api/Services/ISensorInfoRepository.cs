@@ -5,11 +5,12 @@ using System.Threading.Tasks;
 using plantStatus.api.Entities;
 
 namespace plantStatus.api.Services {
-    interface ISensorInfoRepository
+    public interface ISensorInfoRepository
     {
+        bool SensorExists(string sensorId);
         IEnumerable<Sensor> GetSensors();
         Sensor GetSensor(string sensorId, bool includeLight);
         IEnumerable<Light> GetLights(string sensorId);
-        Light GetLightForSensor(string sensorId, string lightId);
+        Light GetLight(string sensorId, string lightId);
     }
 }

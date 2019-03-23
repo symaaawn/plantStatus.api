@@ -14,7 +14,7 @@ namespace plantStatus.api.Services {
         {
             _context = context;
         }
-        public Light GetLightForSensor(string sensorId, string lightId)
+        public Light GetLight(string sensorId, string lightId)
         {
             return _context.Lights.Where(l => l.SensorId == sensorId && l.Id == lightId).FirstOrDefault();
         }
@@ -35,6 +35,11 @@ namespace plantStatus.api.Services {
 
         public IEnumerable<Sensor> GetSensors() {
             return _context.Sensors.OrderBy(s => s.Id).ToList();
+        }
+
+        public bool SensorExists(string sensorId)
+        {
+            return _context.Sensors.Any(s => s.Id == sensorId);
         }
     }
 }
