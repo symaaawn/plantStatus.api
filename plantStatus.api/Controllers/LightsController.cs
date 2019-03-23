@@ -152,24 +152,27 @@ namespace plantStatus.api.Controllers
                     return BadRequest();
                 }
 
-                var sensor = SensorModelDataStore.Current.SensorModels.FirstOrDefault(s => s.Id == sensorId);
-                if (sensor == null)
+                if (!_sensorInfoRepository.SensorExists(sensorId))
                 {
                     _log.Warn($"SensorModel {sensorId} does not exist");
                     return NotFound();
                 }
 
-                var lightModelFromStore = sensor.Light.FirstOrDefault(l => l.Id == id);
+
+                var lightModelFromStore = _sensorInfoRepository.GetLight(sensorId, id);
                 if (lightModelFromStore == null)
                 {
                     _log.Warn($"LightModel {id} does not exist");
                     return NotFound();
                 }
 
-                lightModelFromStore.Value = lightModelFromRequest.Value;
+                Mapper.Map(lightModelFromRequest, lightModelFromStore);
 
-                _log.Info($"Updated LightValue {lightModelFromStore.Id} to Value {lightModelFromStore.Value}");
-
+                if (!_sensorInfoRepository.Save())
+                {
+                    return StatusCode(500, "our server did an oopsie");
+                }
+                
                 return NoContent();
             }
             catch (Exception e)

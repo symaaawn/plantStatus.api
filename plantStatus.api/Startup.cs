@@ -72,7 +72,7 @@ namespace plantStatus.api {
                 cfg.CreateMap<Entities.Sensor, Models.SensorDto>();
                 cfg.CreateMap<Entities.Light, Models.LightDto>();
                 cfg.CreateMap<Models.LightForCreationDto, Entities.Light>();
-                cfg.CreateMap<Models.SensorForCreationDto, Entities.Sensor>();
+                cfg.CreateMap<Models.SensorForCreationDto, Entities.Sensor>(); 
             });
 
             app.UseMvc();
