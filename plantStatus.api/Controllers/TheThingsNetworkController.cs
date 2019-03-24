@@ -18,13 +18,15 @@ namespace plantStatus.api.Controllers
     {
         private ISensorInfoRepository _sensorInfoRepository;
         private static Logger _log = LogManager.GetCurrentClassLogger();
+        private TheThingsNetworkDownlinkService _uplinkService;
 
-        public TheThingsNetworkController(ISensorInfoRepository repository) {
+        public TheThingsNetworkController(ISensorInfoRepository repository, TheThingsNetworkDownlinkService uplinkService) {
             _sensorInfoRepository = repository;
+            _uplinkService = uplinkService;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
         }
 
         [HttpPost]
-        public IActionResult CreateSensorData([FromBody] TheThingsNetworkDownlinkBodyDto ttnBody)
+        public IActionResult CreateSensorData([FromBody] TheThingsNetworkUplinkBodyDto ttnBody)
         {
             Sensor sensor = _sensorInfoRepository.GetSensor(ttnBody.dev_id, false);
 
@@ -58,6 +60,16 @@ namespace plantStatus.api.Controllers
             {
                 return StatusCode(500, "our server did an oopsie");
             }
+
+            TheThingsNetworkDownlinkBodyDto downlinkBody = new TheThingsNetworkDownlinkBodyDto()
+            {
+                dev_id = ttnBody.dev_id,
+                confirmed = false,
+                payload_raw = new Random().Next(1000, 10000).ToString(),
+                port = 1
+            };
+
+            _uplinkService.QueueDownlink(ttnBody.downlink_url, downlinkBody);
 
             return Ok();
         }
