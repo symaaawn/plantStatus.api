@@ -62,7 +62,7 @@ namespace plantStatus.api {
 
             loggerFactory.AddDebug();
 
-            sensorInfoContext.EnsureSeedDataForContext();
+            //sensorInfoContext.EnsureSeedDataForContext();
 
             app.UseStatusCodePages();
 
