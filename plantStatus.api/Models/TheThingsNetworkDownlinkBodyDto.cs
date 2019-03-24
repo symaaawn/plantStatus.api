@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace plantStatus.api.Models {
-    public class TheThingsNetworkBodyDto
+    public class TheThingsNetworkDownlinkBodyDto
     {
         public string app_id;
         public string dev_id;

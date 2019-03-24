@@ -23,7 +23,7 @@ namespace plantStatus.api.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateSensorData([FromBody] TheThingsNetworkBodyDto ttnBody)
+        public IActionResult CreateSensorData([FromBody] TheThingsNetworkDownlinkBodyDto ttnBody)
         {
             Sensor sensor = _sensorInfoRepository.GetSensor(ttnBody.dev_id, false);
 
