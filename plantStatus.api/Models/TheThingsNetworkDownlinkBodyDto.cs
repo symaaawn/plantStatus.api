@@ -9,8 +9,8 @@ namespace plantStatus.api.Models {
         public string app_id;
         public string dev_id;
         public string hardware_serial;
-        public string port;
-        public string counter;
+        public int port;
+        public int counter;
         public string payload_raw;
         public object payload_fields;
         public object metadata;
