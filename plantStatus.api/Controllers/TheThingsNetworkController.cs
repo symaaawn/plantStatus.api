@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -19,10 +20,12 @@ namespace plantStatus.api.Controllers
         private ISensorInfoRepository _sensorInfoRepository;
         private static Logger _log = LogManager.GetCurrentClassLogger();
         private TheThingsNetworkDownlinkService _uplinkService;
+        private SensorActionDeterminationService _sensorActionDetermination;
 
-        public TheThingsNetworkController(ISensorInfoRepository repository, TheThingsNetworkDownlinkService uplinkService) {
+        public TheThingsNetworkController(ISensorInfoRepository repository, TheThingsNetworkDownlinkService uplinkService, SensorActionDeterminationService sensorActionDetermination) {
             _sensorInfoRepository = repository;
-            _uplinkService = uplinkService;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+            _uplinkService = uplinkService;
+            _sensorActionDetermination = sensorActionDetermination;
         }
 
         [HttpPost]
@@ -46,26 +49,32 @@ namespace plantStatus.api.Controllers
             dynamic payload_fields = JsonConvert.DeserializeObject(ttnBody.payload_fields.ToString());
 
             var lightValue = payload_fields.light;
-            Light lightFromTtn = new Light()
+
+            if (lightValue != null)
             {
-                Value = lightValue,
-                TimeOfMeasurement = DateTime.Now
-            };
+                LightForCreationDto lightFromTtn = new LightForCreationDto()
+                {
+                    Value = lightValue
+                };
 
-            sensor = _sensorInfoRepository.GetSensor(ttnBody.dev_id, false);
+                var finalLight = Mapper.Map<Entities.Light>(lightFromTtn);
 
-            _sensorInfoRepository.AddLightForSensor(sensor.Id, lightFromTtn);
+                finalLight = _sensorActionDetermination.AutofillLight(finalLight);
 
-            if (!_sensorInfoRepository.Save()) 
-            {
-                return StatusCode(500, "our server did an oopsie");
+                sensor = _sensorInfoRepository.GetSensor(ttnBody.dev_id, false);
+
+                _sensorInfoRepository.AddLightForSensor(sensor.Id, finalLight);
+
+                if (!_sensorInfoRepository.Save()) {
+                    return StatusCode(500, "our server did an oopsie");
+                }
             }
 
             TheThingsNetworkDownlinkBodyDto downlinkBody = new TheThingsNetworkDownlinkBodyDto()
             {
                 dev_id = ttnBody.dev_id,
                 confirmed = false,
-                payload_raw = new Random().Next(1000, 10000).ToString(),
+                payload_raw = "01",
                 port = 1
             };
 

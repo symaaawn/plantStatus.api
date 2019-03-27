@@ -50,6 +50,8 @@ namespace plantStatus.api {
             services.AddScoped<ISensorInfoRepository, SensorInfoRepository>();
 
             services.AddTransient<TheThingsNetworkDownlinkService>();
+
+            services.AddTransient<SensorActionDeterminationService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,7 +64,7 @@ namespace plantStatus.api {
 
             loggerFactory.AddDebug();
 
-            //sensorInfoContext.EnsureSeedDataForContext();
+            sensorInfoContext.EnsureSeedDataForContext();
 
             app.UseStatusCodePages();
 

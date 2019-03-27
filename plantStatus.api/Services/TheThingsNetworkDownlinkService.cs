@@ -9,9 +9,6 @@ using RestSharp;
 namespace plantStatus.api.Services {
     public class TheThingsNetworkDownlinkService
     {
-        /*public string downlinkUri;
-        public TheThingsNetworkUplinkBodyDto downlinkBody;*/
-
         public void QueueDownlink(string downlinkUri, TheThingsNetworkDownlinkBodyDto downlinkBody)
         {
             Debug.WriteLine($"Sending to URI {downlinkUri}");
