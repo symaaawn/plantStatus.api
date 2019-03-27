@@ -18,9 +18,11 @@ namespace plantStatus.api.Controllers
     {
         private ISensorInfoRepository _sensorInfoRepository;
         private static Logger _log = LogManager.GetCurrentClassLogger();
+        private SensorActionDeterminationService _sensorActionDetermination;
 
-        public LightsController(ISensorInfoRepository repository) {
+        public LightsController(ISensorInfoRepository repository, SensorActionDeterminationService sensorActionDetermination) {
             _sensorInfoRepository = repository;
+            _sensorActionDetermination = sensorActionDetermination;
         }
 
         [HttpGet("{sensorId}/light")]
@@ -100,19 +102,7 @@ namespace plantStatus.api.Controllers
 
                 var finalLight = Mapper.Map<Entities.Light>(lightModelFromRequest);
 
-                DateTime now = DateTime.Now;
-
-                //Light will turn on at night.
-                //Todo: turn on light depending on the sun duration during day
-                bool lightOn;
-                if (now.Hour <= 4 || now.Hour >= 22) {
-                    lightOn = true;
-                } else {
-                    lightOn = false;
-                }
-
-                finalLight.TimeOfMeasurement = now;
-                finalLight.LightOn = lightOn;
+                finalLight = _sensorActionDetermination.AutofillLight(finalLight);
 
                 _sensorInfoRepository.AddLightForSensor(sensorId, finalLight);
 

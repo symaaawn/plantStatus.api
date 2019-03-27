@@ -48,6 +48,10 @@ namespace plantStatus.api {
             services.AddDbContext<SensorInfoContext>(o => o.UseSqlServer(connectionString));
 
             services.AddScoped<ISensorInfoRepository, SensorInfoRepository>();
+
+            services.AddTransient<TheThingsNetworkDownlinkService>();
+
+            services.AddTransient<SensorActionDeterminationService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

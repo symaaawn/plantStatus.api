@@ -45,6 +45,14 @@ namespace plantStatus.api.Services {
             return _context.Sensors.Where(s => s.Id == sensorId).FirstOrDefault();
         }
 
+        public Sensor GetSensor(string sensorDescription, bool includeLight) {
+            if (includeLight) {
+                return _context.Sensors.Include(s => s.Light).Where(s => s.Description == sensorDescription).FirstOrDefault();
+            }
+
+            return _context.Sensors.Where(s => s.Description == sensorDescription).FirstOrDefault();
+        }
+
         public IEnumerable<Sensor> GetSensors() {
             return _context.Sensors.OrderBy(s => s.Id).ToList();
         }
